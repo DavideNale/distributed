@@ -13,7 +13,7 @@ func TestTransformer(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	s := NewStore().WithTransformer(HashTransformer)
+	s := NewStore()
 
 	file := bytes.NewReader([]byte("test content"))
 	if err := s.writeStream("test_folder", file); err != nil {
