@@ -14,7 +14,7 @@ func TestTransformer(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	s := NewStore()
+	s := NewStore().WithTransformer(HashTransformer)
 
 	key := "test_key"
 	file := []byte("test_content")
@@ -30,4 +30,6 @@ func TestStore(t *testing.T) {
 
 	b, _ := io.ReadAll(r)
 	fmt.Println(string(b))
+
+	s.Clear()
 }

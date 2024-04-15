@@ -3,7 +3,6 @@ package p2p
 import (
 	"fmt"
 	"net"
-	"sync"
 )
 
 type Peer interface{}
@@ -16,9 +15,6 @@ type TCPPeer struct {
 type TCP struct {
 	listenAddr string
 	listener   net.Listener
-
-	mu    sync.RWMutex
-	peers map[string]Peer
 }
 
 func NewTCP(listenAddr string) *TCP {

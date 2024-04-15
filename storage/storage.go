@@ -29,17 +29,17 @@ func (s *Store) WithTransformer(pt PathTransformer) *Store {
 
 func (s *Store) readStream(key string) (io.ReadCloser, error) {
 	path := s.PathTransformer(key)
-	return os.Open(path.FullPath())
+	return os.Open(s.Root + "/" + path.FullPath())
 }
 
 func (s *Store) writeStream(key string, r io.Reader) error {
 	path := s.PathTransformer(key)
 
-	if err := os.MkdirAll(path.FilePath, os.ModePerm); err != nil {
+	if err := os.MkdirAll(s.Root+"/"+path.FilePath, os.ModePerm); err != nil {
 		return err
 	}
 
-	full := path.FullPath()
+	full := s.Root + "/" + path.FullPath()
 
 	f, err := os.Create(full)
 	if err != nil {
