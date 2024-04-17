@@ -37,6 +37,7 @@ func NewTCP(listenAddr string) *TCP {
 	return &TCP{
 		listenAddr: listenAddr,
 		handshake:  NOPHandshakeFunc,
+		decoder:    DefaultDecoder{},
 	}
 }
 
@@ -70,12 +71,12 @@ func (t *TCP) handleConn(conn net.Conn) {
 		return
 	}
 
-	buf := make([]byte, 1000)
+	msg := &Message{}
 	for {
-		n, err := conn.Read(buf)
-		if err != nil {
+		if err := t.decoder.Decode(conn, msg); err != nil {
 			fmt.Println("TCP decode error")
+			continue
 		}
-		fmt.Println(buf[:n])
+		fmt.Println(msg)
 	}
 }
