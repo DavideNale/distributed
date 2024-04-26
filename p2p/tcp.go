@@ -1,18 +1,11 @@
 package p2p
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"net"
 )
-
-// Peer represents a remote node in the network.
-type Peer interface{}
-
-// Transport represents anything that handles the
-// communication between nodes.
-type Transport interface {
-	Listen() error
-}
 
 type TCPPeer struct {
 	conn     net.Conn
@@ -41,6 +34,10 @@ func NewTCP(listenAddr string) *TCP {
 	}
 }
 
+func (t *TCP) Close() error {
+	return t.listener.Close()
+}
+
 func (t *TCP) Listen() error {
 	var err error
 	t.listener, err = net.Listen("tcp", t.listenAddr)
@@ -49,8 +46,12 @@ func (t *TCP) Listen() error {
 	}
 
 	go func() {
+		log.Printf("Listening for TCP connections on port: %s\n", t.listenAddr)
 		for {
 			conn, err := t.listener.Accept()
+			if errors.Is(err, net.ErrClosed) {
+				return
+			}
 			if err != nil {
 				fmt.Println("TCP error")
 			}
