@@ -3,8 +3,9 @@ package p2p
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net"
+
+	"github.com/charmbracelet/log"
 )
 
 type TCPPeer struct {
@@ -24,18 +25,35 @@ type TCP struct {
 	listener   net.Listener
 	handshake  HandshakeFunc
 	decoder    Decoder
+	logger     *log.Logger
 }
 
 func NewTCP(listenAddr string) *TCP {
 	return &TCP{
 		listenAddr: listenAddr,
-		handshake:  NOPHandshakeFunc,
+		handshake:  NoHandshakeFunc,
 		decoder:    DefaultDecoder{},
 	}
 }
 
+// Close implements the Transport interface.
 func (t *TCP) Close() error {
 	return t.listener.Close()
+}
+
+// Addr implements the Transport interface.
+func (t *TCP) Addr() string {
+	return t.listenAddr
+}
+
+// Dial implements the Transport interface.
+func (t *TCP) Dial(addr string) error {
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return err
+	}
+	go t.handleConn(conn)
+	return nil
 }
 
 func (t *TCP) Listen() error {
@@ -46,7 +64,6 @@ func (t *TCP) Listen() error {
 	}
 
 	go func() {
-		log.Printf("Listening for TCP connections on port: %s\n", t.listenAddr)
 		for {
 			conn, err := t.listener.Accept()
 			if errors.Is(err, net.ErrClosed) {
@@ -64,7 +81,6 @@ func (t *TCP) Listen() error {
 }
 
 func (t *TCP) handleConn(conn net.Conn) {
-	// peer := NewTCPPeer(conn, true)
 
 	if err := t.handshake(conn); err != nil {
 		conn.Close()
