@@ -1,8 +1,6 @@
 package server
 
 import (
-	"os"
-
 	"github.com/DavideNale/distributed/p2p"
 	"github.com/DavideNale/distributed/storage"
 	"github.com/charmbracelet/log"
@@ -21,14 +19,12 @@ type FileServer struct {
 	logger *log.Logger
 }
 
-func NewFileServer(opts FileServerOpts) *FileServer {
+func NewFileServer(opts FileServerOpts, logger *log.Logger) *FileServer {
 	return &FileServer{
 		FileServerOpts: opts,
 		store:          storage.NewStore(),
 		quitch:         make(chan struct{}),
-		logger: log.NewWithOptions(os.Stderr, log.Options{
-			Level: log.DebugLevel,
-		}),
+		logger:         logger,
 	}
 }
 

@@ -28,11 +28,12 @@ type TCP struct {
 	logger     *log.Logger
 }
 
-func NewTCP(listenAddr string) *TCP {
+func NewTCP(listenAddr string, logger *log.Logger) *TCP {
 	return &TCP{
 		listenAddr: listenAddr,
 		handshake:  NoHandshakeFunc,
 		decoder:    DefaultDecoder{},
+		logger:     logger,
 	}
 }
 
@@ -72,7 +73,7 @@ func (t *TCP) Listen() error {
 			if err != nil {
 				fmt.Println("TCP error")
 			}
-			fmt.Println("TCP connection accepted")
+			t.logger.Debug("TCP connection accepted", "port", t.listenAddr)
 			go t.handleConn(conn)
 		}
 	}()

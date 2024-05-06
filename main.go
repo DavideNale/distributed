@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"strings"
 	"time"
 
 	"github.com/DavideNale/distributed/p2p"
@@ -21,11 +23,14 @@ func main() {
 
 // makeServer initializes a FileServer and returns a pointer to it
 func makeServer(port string, root string, nodes ...string) *server.FileServer {
-	tcpTransport := p2p.NewTCP(port)
+	logger := log.NewWithOptions(os.Stderr, log.Options{
+		Level:  log.DebugLevel,
+		Prefix: strings.Split(root, "/")[0],
+	})
 	fileServerOpts := server.FileServerOpts{
 		Root:           root,
-		Transport:      tcpTransport,
+		Transport:      p2p.NewTCP(port, logger),
 		BootstrapNodes: nodes,
 	}
-	return server.NewFileServer(fileServerOpts)
+	return server.NewFileServer(fileServerOpts, logger)
 }
