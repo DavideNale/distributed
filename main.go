@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"strings"
 	"time"
@@ -18,10 +19,15 @@ func main() {
 	time.Sleep(2 * time.Millisecond)
 	go func() { log.Fatal(s2.Start()) }()
 
+	time.Sleep(2 * time.Second)
+	key := "file.png"
+	data := bytes.NewReader([]byte("file content"))
+	s1.Store(key, data)
+
 	select {}
 }
 
-// makeServer initializes a FileServer and returns a pointer to it
+// makeServer returns a pointer to a configured server.
 func makeServer(port string, root string, nodes ...string) *server.FileServer {
 	logger := log.NewWithOptions(os.Stderr, log.Options{
 		Level:  log.DebugLevel,
@@ -31,6 +37,7 @@ func makeServer(port string, root string, nodes ...string) *server.FileServer {
 		Root:           root,
 		Transport:      p2p.NewTCP(port, logger),
 		BootstrapNodes: nodes,
+		Logger:         logger,
 	}
 	return server.NewFileServer(fileServerOpts, logger)
 }

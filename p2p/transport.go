@@ -8,5 +8,13 @@ type Transport interface {
 	Addr() string
 	Listen() error
 	Dial(string) error
+	Consume() <-chan RPC
 	Close() error
+}
+
+// RPC represents an arbitrary message sent over a Transport.
+type RPC struct {
+	From    string
+	Payload []byte
+	Stream  bool
 }

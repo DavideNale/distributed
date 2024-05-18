@@ -1,30 +1,24 @@
 package storage
 
 import (
+	"fmt"
 	"io"
 	"os"
 )
 
-type Store struct {
-	Root            string
+type StoreOpts struct {
+	Root            string // The root folder of the file system
 	PathTransformer PathTransformer
 }
 
-func NewStore() *Store {
+type Store struct {
+	StoreOpts
+}
+
+func NewStore(opts StoreOpts) *Store {
 	return &Store{
-		Root:            "data",
-		PathTransformer: DefaultTransformer,
+		StoreOpts: opts,
 	}
-}
-
-func (s *Store) WithRootPath(root string) *Store {
-	s.Root = root
-	return s
-}
-
-func (s *Store) WithTransformer(pt PathTransformer) *Store {
-	s.PathTransformer = pt
-	return s
 }
 
 func (s *Store) readStream(key string) (io.ReadCloser, error) {
@@ -32,24 +26,18 @@ func (s *Store) readStream(key string) (io.ReadCloser, error) {
 	return os.Open(s.Root + "/" + path.FullPath())
 }
 
-func (s *Store) writeStream(key string, r io.Reader) error {
+func (s *Store) writeStream(key string, r io.Reader) (int64, error) {
 	path := s.PathTransformer(key)
-
-	if err := os.MkdirAll(s.Root+"/"+path.FilePath, os.ModePerm); err != nil {
-		return err
+	folderPath := fmt.Sprintf("%s/%s", s.Root, path.FilePath)
+	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+		return 0, err
 	}
 
-	full := s.Root + "/" + path.FullPath()
-
-	f, err := os.Create(full)
+	filePath := fmt.Sprintf("%s/%s", s.Root, path.FullPath())
+	f, err := os.Create(filePath)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	_, err = io.Copy(f, r)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return io.Copy(f, r)
 }

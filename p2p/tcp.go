@@ -8,11 +8,13 @@ import (
 	"github.com/charmbracelet/log"
 )
 
+// TCPPeer representa a node over an established TCP connection.
 type TCPPeer struct {
 	conn     net.Conn
 	outbound bool
 }
 
+// NewTCPPeer returns a pointer to a TCPPeer.
 func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
 	return &TCPPeer{
 		conn:     conn,
@@ -20,6 +22,7 @@ func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
 	}
 }
 
+// TCP implements the Trasport interface.
 type TCP struct {
 	listenAddr string
 	listener   net.Listener
@@ -28,6 +31,7 @@ type TCP struct {
 	logger     *log.Logger
 }
 
+// NewTCP returns a pointer to a newly configured TPC.
 func NewTCP(listenAddr string, logger *log.Logger) *TCP {
 	return &TCP{
 		listenAddr: listenAddr,
@@ -57,6 +61,7 @@ func (t *TCP) Dial(addr string) error {
 	return nil
 }
 
+// Listen implements the Transport interface.
 func (t *TCP) Listen() error {
 	var err error
 	t.listener, err = net.Listen("tcp", t.listenAddr)
@@ -85,16 +90,20 @@ func (t *TCP) handleConn(conn net.Conn) {
 
 	if err := t.handshake(conn); err != nil {
 		conn.Close()
-		fmt.Println("TCP handshake error")
+		t.logger.Error("TCP handshake error")
 		return
 	}
 
 	msg := &Message{}
 	for {
 		if err := t.decoder.Decode(conn, msg); err != nil {
-			fmt.Println("TCP decode error")
+			t.logger.Error("TCP error decoding RPC")
 			continue
 		}
 		fmt.Println(msg)
 	}
+}
+
+func (t *TCP) Consume() <-chan RPC {
+	return make(chan RPC, 1014)
 }

@@ -7,19 +7,17 @@ import (
 	"testing"
 )
 
-func TestTransformer(t *testing.T) {
-	key := "test_key"
-	pathname := HashTransformer(key)
-	fmt.Println(pathname)
-}
-
 func TestStore(t *testing.T) {
-	s := NewStore().WithTransformer(HashTransformer)
+	storeOpts := StoreOpts{
+		Root:            "data",
+		PathTransformer: HashTransformer,
+	}
+	s := NewStore(storeOpts)
 
 	key := "test_key"
 	file := []byte("test_content")
 
-	if err := s.writeStream(key, bytes.NewReader(file)); err != nil {
+	if _, err := s.writeStream(key, bytes.NewReader(file)); err != nil {
 		t.Error(err)
 	}
 
