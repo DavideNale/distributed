@@ -18,6 +18,19 @@ func (s *FileServer) Store(key string, r io.Reader) error {
 	return nil
 }
 
+func (s *FileServer) Get(key string) (io.Reader, error) {
+	if s.store.Exists(key) {
+		size, r, err := s.store.Read(key)
+		if err != nil {
+			return nil, err
+		}
+		s.Logger.Info("successfully retrieved local file", "key", key, "size", size)
+		return r, nil
+	}
+	s.Logger.Debug("file not present locally, fetching for peers", "key", key)
+	return nil, nil
+}
+
 // Delete deletes the file with the specified key, if it exists.
 func (s *FileServer) Delete(key string) error {
 	defer s.Logger.Info("deleted file", "key", key)

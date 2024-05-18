@@ -21,9 +21,21 @@ func NewStore(opts StoreOpts) *Store {
 	}
 }
 
-func (s *Store) readStream(key string) (io.ReadCloser, error) {
+func (s *Store) readStream(key string) (int64, io.ReadCloser, error) {
 	path := s.PathTransformer(key)
-	return os.Open(s.Root + "/" + path.FullPath())
+	filePath := fmt.Sprintf("%s/%s", s.Root, path.FullPath())
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		file.Close()
+		return 0, nil, err
+	}
+	fileInfo, err := file.Stat()
+	if err != nil {
+		file.Close()
+		return 0, nil, err
+	}
+	return fileInfo.Size(), file, nil
 }
 
 func (s *Store) writeStream(key string, r io.Reader) (int64, error) {

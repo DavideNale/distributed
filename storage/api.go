@@ -1,51 +1,38 @@
 package storage
 
 import (
-	"bytes"
 	"errors"
+	"fmt"
 	"io"
-	"io/fs"
 	"os"
 )
 
-// Write
-// Read
-// Delete
-// Exists
-// Clear
-
+// Write writes data from the provided io.Reader to the store under the given key.
 func (s *Store) Write(key string, r io.Reader) (int64, error) {
 	return s.writeStream(key, r)
 }
 
-func (s *Store) Read(key string) (io.Reader, error) {
-	f, err := s.readStream(key)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	buf := new(bytes.Buffer)
-	_, err = io.Copy(buf, f)
-
-	return buf, err
+// Read reads data associated with the provided key from the store.
+func (s *Store) Read(key string) (int64, io.Reader, error) {
+	return s.readStream(key)
 }
 
+// Delete deletes the data associated with the provided key from the store.
 func (s *Store) Delete(key string) error {
 	path := s.PathTransformer(key)
-	return os.RemoveAll(s.Root + "/" + path.FullPath())
+	filePath := fmt.Sprintf("%s/%s", s.Root, path.FullPath())
+	return os.RemoveAll(filePath)
 }
 
+// Exists checks if data associated with the provided key exists in the store.
 func (s *Store) Exists(key string) bool {
 	path := s.PathTransformer(key)
-
-	_, err := os.Stat(s.Root + "/" + path.FullPath())
-	if errors.Is(err, fs.ErrNotExist) {
-		return false
-	}
-	return true
+	filePath := fmt.Sprintf("%s/%s", s.Root, path.FullPath())
+	_, err := os.Stat(filePath)
+	return !errors.Is(err, os.ErrNotExist)
 }
 
+// Clear removes all data from the store, leaving it empty.
 func (s *Store) Clear() error {
 	return os.RemoveAll(s.Root)
 }

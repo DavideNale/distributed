@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -25,7 +26,12 @@ func main() {
 	s1.Store(key, data)
 
 	time.Sleep(1 * time.Second)
+	reader, _ := s1.Get(key)
+	content := readFileContent(reader)
+	s1.Logger.Debug("file", "content", content)
 	s1.Delete(key)
+
+	time.Sleep(1 * time.Second)
 	s1.Clear()
 	select {}
 }
@@ -43,4 +49,10 @@ func makeServer(port string, root string, nodes ...string) *server.FileServer {
 		Logger:         logger,
 	}
 	return server.NewFileServer(fileServerOpts, logger)
+}
+
+// readFileContent reads the file content as a string.
+func readFileContent(r io.Reader) string {
+	file, _ := io.ReadAll(r)
+	return string(file)
 }
