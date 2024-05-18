@@ -19,11 +19,14 @@ func main() {
 	time.Sleep(2 * time.Millisecond)
 	go func() { log.Fatal(s2.Start()) }()
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 	key := "file.png"
 	data := bytes.NewReader([]byte("file content"))
 	s1.Store(key, data)
 
+	time.Sleep(1 * time.Second)
+	s1.Delete(key)
+	s1.Clear()
 	select {}
 }
 
