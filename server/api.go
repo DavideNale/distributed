@@ -2,7 +2,7 @@ package server
 
 import (
 	"bytes"
-	"fmt"
+	"encoding/binary"
 	"io"
 	"time"
 )
@@ -55,6 +55,30 @@ func (s *FileServer) Get(key string) (io.Reader, error) {
 		return r, nil
 	}
 	s.Logger.Debug("file not present locally, fetching for peers", "key", key)
+
+	msg := Message{
+		Payload: MessageGet{
+			Key: key,
+		},
+	}
+
+	if err := s.broadcast(&msg); err != nil {
+		return nil, err
+	}
+
+	for _, peer := range s.peers {
+		var size int64
+		binary.Read(peer, binary.LittleEndian, &size)
+		n, err := s.store.Write(key, io.LimitReader(peer, size))
+		if err != nil {
+			return nil, err
+		}
+		s.Logger.Info("recieved from peer", "key", key, "size", n)
+		peer.CloseStream()
+		break
+	}
+
+	time.Sleep(time.Millisecond * 100)
 	return nil, nil
 }
 
@@ -69,7 +93,6 @@ func (s *FileServer) Delete(key string) error {
 	}
 
 	if err := s.broadcast(&msg); err != nil {
-		fmt.Println(err)
 		return err
 	}
 	return s.store.Delete(key)

@@ -26,18 +26,19 @@ func main() {
 	s1.Store(key, data)
 
 	time.Sleep(2 * time.Second)
+	s2.Get(key)
 	// reader, _ := s1.Get(key)
 	// content := readFileContent(reader)
 
 	// s1.Logger.Debug("file", "content", content)
-	s1.Delete(key)
+	// s1.Delete(key)
 
-	time.Sleep(2 * time.Second)
-	key = "another.png"
-	data = bytes.NewReader([]byte("another content"))
-	s2.Store(key, data)
+	// time.Sleep(2 * time.Second)
+	// key = "another.png"
+	// data = bytes.NewReader([]byte("another content"))
+	// s2.Store(key, data)
 
-	time.Sleep(1 * time.Second)
+	// time.Sleep(1 * time.Second)
 	// s1.Clear()
 	// s2.Clear()
 	select {}
