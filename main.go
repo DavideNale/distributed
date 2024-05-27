@@ -20,7 +20,7 @@ func main() {
 	time.Sleep(2 * time.Millisecond)
 	go func() { log.Fatal(s2.Start()) }()
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 	key := "file.png"
 	data := bytes.NewReader([]byte("file content"))
 	s1.Store(key, data)

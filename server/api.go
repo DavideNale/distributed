@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"io"
+	"time"
 )
 
 // Store stores a file with a specific key.
@@ -29,6 +30,17 @@ func (s *FileServer) Store(key string, r io.Reader) error {
 		return err
 	}
 
+	time.Sleep(time.Microsecond * 5)
+
+	peers := []io.Writer{}
+	for _, peer := range s.peers {
+		peers = append(peers, peer)
+	}
+	mw := io.MultiWriter(peers...)
+	_, err = mw.Write(fileBuffer.Bytes())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

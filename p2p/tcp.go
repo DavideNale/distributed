@@ -122,6 +122,7 @@ func (t *TCP) handleConn(conn net.Conn, outbound bool) {
 			t.logger.Error("TCP error decoding RPC")
 			return
 		}
+		rpc.From = conn.RemoteAddr().String()
 		t.rpcch <- rpc
 		peer.wg.Add(1)
 		peer.wg.Wait()
