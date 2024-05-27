@@ -2,24 +2,35 @@ package p2p
 
 import (
 	"errors"
-	"fmt"
 	"net"
+	"sync"
 
 	"github.com/charmbracelet/log"
 )
 
 // TCPPeer representa a node over an established TCP connection.
 type TCPPeer struct {
-	conn     net.Conn
+	net.Conn
 	outbound bool
+	wg       *sync.WaitGroup
 }
 
 // NewTCPPeer returns a pointer to a TCPPeer.
 func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
 	return &TCPPeer{
-		conn:     conn,
+		Conn:     conn,
 		outbound: outbound,
+		wg:       &sync.WaitGroup{},
 	}
+}
+
+func (p *TCPPeer) CloseStream() {
+	p.wg.Done()
+}
+
+func (p *TCPPeer) Send(b []byte) error {
+	_, err := p.Conn.Write(b)
+	return err
 }
 
 // TCP implements the Trasport interface.
@@ -29,6 +40,8 @@ type TCP struct {
 	handshake  HandshakeFunc
 	decoder    Decoder
 	logger     *log.Logger
+	rpcch      chan RPC
+	OnPeer     func(Peer) error
 }
 
 // NewTCP returns a pointer to a newly configured TPC.
@@ -38,6 +51,7 @@ func NewTCP(listenAddr string, logger *log.Logger) *TCP {
 		handshake:  NoHandshakeFunc,
 		decoder:    DefaultDecoder{},
 		logger:     logger,
+		rpcch:      make(chan RPC, 1024),
 	}
 }
 
@@ -57,7 +71,7 @@ func (t *TCP) Dial(addr string) error {
 	if err != nil {
 		return err
 	}
-	go t.handleConn(conn)
+	go t.handleConn(conn, false)
 	return nil
 }
 
@@ -76,34 +90,44 @@ func (t *TCP) Listen() error {
 				return
 			}
 			if err != nil {
-				fmt.Println("TCP error")
+				t.logger.Error("TCP error")
 			}
 			t.logger.Debug("TCP connection accepted", "port", t.listenAddr)
-			go t.handleConn(conn)
+			go t.handleConn(conn, false)
 		}
 	}()
 
 	return nil
 }
 
-func (t *TCP) handleConn(conn net.Conn) {
+func (t *TCP) handleConn(conn net.Conn, outbound bool) {
+	defer func() {
+		t.logger.Debug("dropping peer connection", "peer", conn.RemoteAddr().String())
+		defer conn.Close()
+	}()
 
-	if err := t.handshake(conn); err != nil {
-		conn.Close()
-		t.logger.Error("TCP handshake error")
+	peer := NewTCPPeer(conn, outbound)
+	if err := t.handshake(peer); err != nil {
 		return
 	}
-
-	msg := &Message{}
-	for {
-		if err := t.decoder.Decode(conn, msg); err != nil {
-			t.logger.Error("TCP error decoding RPC")
-			continue
+	if t.OnPeer != nil {
+		if err := t.OnPeer(peer); err != nil {
+			return
 		}
-		fmt.Println(msg)
+	}
+
+	rpc := RPC{}
+	for {
+		if err := t.decoder.Decode(conn, &rpc); err != nil {
+			t.logger.Error("TCP error decoding RPC")
+			return
+		}
+		t.rpcch <- rpc
+		peer.wg.Add(1)
+		peer.wg.Wait()
 	}
 }
 
 func (t *TCP) Consume() <-chan RPC {
-	return make(chan RPC, 1014)
+	return t.rpcch
 }

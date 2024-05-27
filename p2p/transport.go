@@ -1,7 +1,18 @@
 package p2p
 
+import "net"
+
+const (
+	IncomingMessage = 0x1
+	IncomingStream  = 0x2
+)
+
 // Peer represents a remote node in the network.
-type Peer interface{}
+type Peer interface {
+	net.Conn
+	Send([]byte) error
+	CloseStream()
+}
 
 // Transport represents the communication channel.
 type Transport interface {

@@ -31,8 +31,13 @@ func main() {
 	s1.Logger.Debug("file", "content", content)
 	s1.Delete(key)
 
+	key = "another.png"
+	data = bytes.NewReader([]byte("another content"))
+	s2.Store(key, data)
+
 	time.Sleep(1 * time.Second)
-	s1.Clear()
+	// s1.Clear()
+	// s2.Clear()
 	select {}
 }
 

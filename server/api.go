@@ -14,7 +14,21 @@ func (s *FileServer) Store(key string, r io.Reader) error {
 	if err != nil {
 		return err
 	}
+
 	s.Logger.Info("successfully stored file", "key", key, "size", size)
+	s.Logger.Debug("broadcasting to peers")
+
+	msg := Message{
+		Payload: MessageStore{
+			Key:  key,
+			Size: size,
+		},
+	}
+
+	if err := s.broadcast(&msg); err != nil {
+		return err
+	}
+
 	return nil
 }
 
