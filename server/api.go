@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"time"
 )
@@ -60,6 +61,17 @@ func (s *FileServer) Get(key string) (io.Reader, error) {
 // Delete deletes the file with the specified key, if it exists.
 func (s *FileServer) Delete(key string) error {
 	defer s.Logger.Info("deleted file", "key", key)
+
+	msg := Message{
+		Payload: MessageDelete{
+			Key: key,
+		},
+	}
+
+	if err := s.broadcast(&msg); err != nil {
+		fmt.Println(err)
+		return err
+	}
 	return s.store.Delete(key)
 }
 
